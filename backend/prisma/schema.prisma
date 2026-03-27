@@ -5,11 +5,821 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+//  USER
+// ─────────────────────────────────────────────
+model user {
+  user_id          Int      @id @default(autoincrement())
+  name             String
+  number           String?
+  address          String?
+  email            String   @unique
+  blacklist_status String   @default("active")
+  password         String
+
+  // ── Relationships ──────────────────────────
+  orders           orders[]
+  queries          query[]
+  cart             cart[]
+  wishlists        wishlist[]
+  manual_orders    manual_order[]
+  addresses        address[]
+  reviews          review[]
+  reports          report[]
+  generated_images generated_image[]
+  biddings         bidding[]
+  bidding_orders   bidding_order[]
+  otp              otp[]
+}
+
+// ─────────────────────────────────────────────
+//  VENDOR
+// ─────────────────────────────────────────────
+model vendor {
+  vendor_id     Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  password      String
+  business_name String
+  description   String?
+  phone         String?
+  address       String?
+  city          String?
+  state         String?
+  country       String?
+
+  // ── Relationships ──────────────────────────
+  orders           orders[]
+  query_vendors    query_vendor[]
+  manual_orders    manual_order[]
+  vendor_locations vendor_location[]
+  reports          report[]
+  biddings         bidding[]
+  bidding_orders   bidding_order[]
+  premium_vendors  premium_vendor[]
+}
+
+// ─────────────────────────────────────────────
+//  ADMIN
+// ─────────────────────────────────────────────
+model admin {
+  admin_id Int    @id @default(autoincrement())
+  password String
+}
+
+// ─────────────────────────────────────────────
+//  OTP
+// ─────────────────────────────────────────────
+model otp {
+  otp_id     Int      @id @default(autoincrement())
+  time_stamp DateTime @default(now())
+  email      String?
+  otp        String
+  number     String?
+  user_id    Int?
+
+  // ── Relationships ──────────────────────────
+  user user? @relation(fields: [user_id], references: [user_id])
+}
+
+// ─────────────────────────────────────────────
+//  LOCATION
+// ─────────────────────────────────────────────
+model location {
+  location_id       Int               @id @default(autoincrement())
+  name              String
+
+  // ── Relationships ──────────────────────────
+  service_locations service_location[]
+  vendor_locations  vendor_location[]
+  package_locations package_location[]
+  addresses         address[]
+  carts             cart[]
+  wishlists         wishlist[]
+  generated_images  generated_image[]
+  query_orders      query_order[]
+}
+
+// ─────────────────────────────────────────────
+//  CATEGORY
+// ─────────────────────────────────────────────
+model category {
+  category_id             Int                   @id @default(autoincrement())
+  name                    String
+  number                  Int
+
+  // ── Relationships ──────────────────────────
+  service_categories      service_category[]
+  package_type_categories package_type_category[]
+}
+
+// ─────────────────────────────────────────────
+//  TAGS
+// ─────────────────────────────────────────────
+model tags {
+  tag_id       Int            @id @default(autoincrement())
+  name         String
+
+  // ── Relationships ──────────────────────────
+  service_tags service_tags[]
+}
+
+// ─────────────────────────────────────────────
+//  PACKAGES
+// ─────────────────────────────────────────────
+model packages {
+  package_id            Int                @id @default(autoincrement())
+  name                  String
+
+  // ── Relationships ──────────────────────────
+  package_types         package_type[]
+  service_packages_list service_packages[]
+  package_locations     package_location[]
+  cart_packages         cart_package[]
+  wishlist_packages     wishlist_package[]
+  reviews               review[]
+}
+
+// ─────────────────────────────────────────────
+//  PACKAGE_TYPE
+// ─────────────────────────────────────────────
+model package_type {
+  package_type_id         Int                   @id @default(autoincrement())
+  package_id              Int
+  name                    String
+  base_price              Float
+
+  // ── Relationships ──────────────────────────
+  package                 packages              @relation(fields: [package_id],          references: [package_id])
+  package_type_categories package_type_category[]
+  service_packages_list   service_packages[]
+  order_packages          order_package[]
+  package_locations       package_location[]
+  cart_packages           cart_package[]
+  wishlist_packages       wishlist_package[]
+  reviews                 review[]
+}
+
+// ─────────────────────────────────────────────
+//  PACKAGE_CATEGORY
+// ─────────────────────────────────────────────
+model package_category {
+  package_category_id     Int                   @id @default(autoincrement())
+  name                    String
+
+  // ── Relationships ──────────────────────────
+  package_type_categories package_type_category[]
+  service_packages_list   service_packages[]
+  cart_package_services   cart_package_service[]
+  wishlist_package_services wishlist_package_service[]
+}
+
+// ─────────────────────────────────────────────
+//  PACKAGE_TYPE_CATEGORY
+// ─────────────────────────────────────────────
+model package_type_category {
+  package_type_category_id Int @id @default(autoincrement())
+  package_type_id          Int
+  package_category_id      Int
+  category_id              Int
+
+  // ── Relationships ──────────────────────────
+  package_type     package_type     @relation(fields: [package_type_id],     references: [package_type_id])
+  package_category package_category @relation(fields: [package_category_id], references: [package_category_id])
+  category         category         @relation(fields: [category_id],         references: [category_id])
+}
+
+// ─────────────────────────────────────────────
+//  SERVICES
+// ─────────────────────────────────────────────
+model services {
+  services_id       Int      @id @default(autoincrement())
+  name              String
+  short_desc        String?
+  long_desc         String?
+  sku               String?
+  stock_status      String?
+  manage_stock      Boolean?
+  category_id       Int?
+  menu_order        Int?
+  purchase_note     String?
+  overriding_policy String?
+  attributes        String?
+  used              Int?
+  ratings           Float?
+
+  // ── Relationships ──────────────────────────
+  service_packages_list service_packages[]
+  service_categories    service_category[]
+  service_tags          service_tags[]
+  service_locations     service_location[]
+  queries               query[]
+  chats                 chats[]
+  carts                 cart[]
+  wishlists             wishlist[]
+  order_services        order_service[]
+  cart_package_services cart_package_service[]
+  wishlist_package_services wishlist_package_service[]
+  reviews               review[]
+  query_orders          query_order[]
+}
+
+// ─────────────────────────────────────────────
+//  SERVICE_PACKAGES
+// ─────────────────────────────────────────────
+model service_packages {
+  service_packages_id Int   @id @default(autoincrement())
+  service_id          Int
+  package_category_id Int
+  package_id          Int
+  package_type_id     Int
+  base_price          Float
+
+  // ── Relationships ──────────────────────────
+  service          services         @relation(fields: [service_id],          references: [services_id])
+  package_category package_category @relation(fields: [package_category_id], references: [package_category_id])
+  package          packages         @relation(fields: [package_id],          references: [package_id])
+  package_type     package_type     @relation(fields: [package_type_id],     references: [package_type_id])
+}
+
+// ─────────────────────────────────────────────
+//  SERVICE_CATEGORY
+// ─────────────────────────────────────────────
+model service_category {
+  service_category_id Int @id @default(autoincrement())
+  service_id          Int
+  category_id         Int
+
+  // ── Relationships ──────────────────────────
+  service  services @relation(fields: [service_id],  references: [services_id])
+  category category @relation(fields: [category_id], references: [category_id])
+}
+
+// ─────────────────────────────────────────────
+//  SERVICE_TAGS
+// ─────────────────────────────────────────────
+model service_tags {
+  service_tags_id Int @id @default(autoincrement())
+  service_id      Int
+  tag_id          Int
+
+  // ── Relationships ──────────────────────────
+  service services @relation(fields: [service_id], references: [services_id])
+  tag     tags     @relation(fields: [tag_id],     references: [tag_id])
+}
+
+// ─────────────────────────────────────────────
+//  SERVICE_LOCATION
+// ─────────────────────────────────────────────
+model service_location {
+  service_location_id Int   @id @default(autoincrement())
+  service_id          Int
+  location_id         Int
+  base_price          Float
+  sale_price          Float
+
+  // ── Relationships ──────────────────────────
+  service  services @relation(fields: [service_id],  references: [services_id])
+  location location @relation(fields: [location_id], references: [location_id])
+}
+
+// ─────────────────────────────────────────────
+//  VENDOR_LOCATION
+// ─────────────────────────────────────────────
+model vendor_location {
+  vendor_location_id Int @id @default(autoincrement())
+  vendor_id          Int
+  location_id        Int
+
+  // ── Relationships ──────────────────────────
+  vendor   vendor   @relation(fields: [vendor_id],   references: [vendor_id])
+  location location @relation(fields: [location_id], references: [location_id])
+}
+
+// ─────────────────────────────────────────────
+//  PACKAGE_LOCATION
+// ─────────────────────────────────────────────
+model package_location {
+  package_location_id Int   @id @default(autoincrement())
+  location_id         Int
+  package_type_id     Int
+  package_id          Int
+  base_price          Float
+
+  // ── Relationships ──────────────────────────
+  location     location     @relation(fields: [location_id],    references: [location_id])
+  package_type package_type @relation(fields: [package_type_id], references: [package_type_id])
+  package      packages     @relation(fields: [package_id],     references: [package_id])
+}
+
+// ─────────────────────────────────────────────
+//  ADDRESS
+// ─────────────────────────────────────────────
+model address {
+  address_id  Int     @id @default(autoincrement())
+  user_id     Int
+  address     String
+  city        String?
+  country     String?
+  location_id Int?
+
+  // ── Relationships ──────────────────────────
+  user     user      @relation(fields: [user_id],     references: [user_id])
+  location location? @relation(fields: [location_id], references: [location_id])
+  biddings bidding[]
+}
+
+// ─────────────────────────────────────────────
+//  CART
+// ─────────────────────────────────────────────
+model cart {
+  cart_id     Int     @id @default(autoincrement())
+  is_package  Boolean @default(false)
+  user_id     Int
+  service_id  Int
+  total_price Float
+  location_id Int?
+  is_saved    Boolean @default(false)
+
+  // ── Relationships ──────────────────────────
+  user          user           @relation(fields: [user_id],    references: [user_id])
+  service       services       @relation(fields: [service_id], references: [services_id])
+  location      location?      @relation(fields: [location_id], references: [location_id])
+  cart_packages cart_package[]
+}
+
+// ─────────────────────────────────────────────
+//  CART_PACKAGE
+// ─────────────────────────────────────────────
+model cart_package {
+  cart_package_id Int   @id @default(autoincrement())
+  cart_id         Int
+  package_id      Int
+  package_type_id Int
+  base_price      Float
+  total_price     Float
+
+  // ── Relationships ──────────────────────────
+  cart         cart         @relation(fields: [cart_id],        references: [cart_id])
+  package      packages     @relation(fields: [package_id],     references: [package_id])
+  package_type package_type @relation(fields: [package_type_id], references: [package_type_id])
+  cart_package_services cart_package_service[]
+}
+
+// ─────────────────────────────────────────────
+//  CART_PACKAGE_SERVICE
+// ─────────────────────────────────────────────
+model cart_package_service {
+  cart_package_service_id Int   @id @default(autoincrement())
+  cart_package_id         Int
+  service_id              Int
+  base_price              Float
+  package_category_id     Int
+
+  // ── Relationships ──────────────────────────
+  cart_package     cart_package     @relation(fields: [cart_package_id],     references: [cart_package_id])
+  service          services         @relation(fields: [service_id],          references: [services_id])
+  package_category package_category @relation(fields: [package_category_id], references: [package_category_id])
+}
+
+// ─────────────────────────────────────────────
+//  WISHLIST
+// ─────────────────────────────────────────────
+model wishlist {
+  wishlist_id Int     @id @default(autoincrement())
+  service_id  Int
+  is_package  Boolean @default(false)
+  user_id     Int
+  location_id Int?
+
+  // ── Relationships ──────────────────────────
+  user              user               @relation(fields: [user_id],    references: [user_id])
+  service           services           @relation(fields: [service_id], references: [services_id])
+  location          location?          @relation(fields: [location_id], references: [location_id])
+  wishlist_packages wishlist_package[]
+}
+
+// ─────────────────────────────────────────────
+//  WISHLIST_PACKAGE
+// ─────────────────────────────────────────────
+model wishlist_package {
+  wishlist_package_id Int   @id @default(autoincrement())
+  wishlist_id         Int
+  package_id          Int
+  package_type_id     Int
+  base_price          Float
+  total_price         Float
+
+  // ── Relationships ──────────────────────────
+  wishlist     wishlist     @relation(fields: [wishlist_id],    references: [wishlist_id])
+  package      packages     @relation(fields: [package_id],     references: [package_id])
+  package_type package_type @relation(fields: [package_type_id], references: [package_type_id])
+  wishlist_package_services wishlist_package_service[]
+}
+
+// ─────────────────────────────────────────────
+//  WISHLIST_PACKAGE_SERVICE
+// ─────────────────────────────────────────────
+model wishlist_package_service {
+  wishlist_package_service_id Int   @id @default(autoincrement())
+  wishlist_package_id         Int
+  service_id                  Int
+  base_price                  Float
+  package_category_id         Int
+
+  // ── Relationships ──────────────────────────
+  wishlist_package wishlist_package @relation(fields: [wishlist_package_id],   references: [wishlist_package_id])
+  service          services         @relation(fields: [service_id],            references: [services_id])
+  package_category package_category @relation(fields: [package_category_id],   references: [package_category_id])
+}
+
+// ─────────────────────────────────────────────
+//  MANUAL_ORDER
+// ─────────────────────────────────────────────
+model manual_order {
+  manual_order_id Int      @id @default(autoincrement())
+  vendor_id       Int
+  vendor_name     String
+  vendor_phone    String
+  address         String
+  service_date    DateTime
+  user_id         Int
+  customer_name   String
+  phone_no        String
+  payment_type    String
+  total_paid      Float
+  service_details String?
+
+  // ── Relationships ──────────────────────────
+  vendor vendor @relation(fields: [vendor_id], references: [vendor_id])
+  user   user   @relation(fields: [user_id],   references: [user_id])
+}
+
+// ─────────────────────────────────────────────
+//  REVIEW
+// ─────────────────────────────────────────────
+model review {
+  review_id       Int     @id @default(autoincrement())
+  user_id         Int
+  order_id        Int
+  review_text     String?
+  has_image       Boolean @default(false)
+  has_video       Boolean @default(false)
+  service_id      Int
+  rating          Float
+  package_id      Int?
+  package_type_id Int?
+
+  // ── Relationships ──────────────────────────
+  user         user         @relation(fields: [user_id],    references: [user_id])
+  order        orders       @relation(fields: [order_id],   references: [order_id])
+  service      services     @relation(fields: [service_id], references: [services_id])
+  package      packages?    @relation(fields: [package_id],     references: [package_id])
+  package_type package_type? @relation(fields: [package_type_id], references: [package_type_id])
+}
+
+// ─────────────────────────────────────────────
+//  REPORT
+// ─────────────────────────────────────────────
+model report {
+  report_id   Int     @id @default(autoincrement())
+  user_id     Int
+  vendor_id   Int?
+  reported_id Int     // generic ID of the entity being reported
+  reason_text String?
+  has_image   Boolean @default(false)
+
+  // ── Relationships ──────────────────────────
+  user   user    @relation(fields: [user_id],   references: [user_id])
+  vendor vendor? @relation(fields: [vendor_id], references: [vendor_id])
+}
+
+// ─────────────────────────────────────────────
+//  IMAGE_CATEGORY
+// ─────────────────────────────────────────────
+model image_category {
+  image_category_id Int      @id @default(autoincrement())
+  name              String
+
+  // ── Relationships ──────────────────────────
+  images images[]
+}
+
+// ─────────────────────────────────────────────
+//  IMAGES
+// ─────────────────────────────────────────────
+model images {
+  image_id              Int     @id @default(autoincrement())
+  image_category_id     Int
+  name                  String
+  slot_no               Int?
+  recorded_call         Boolean @default(false)
+  whatsapp_notification Boolean @default(false)
+  image_generation      Boolean @default(false) // fixed: was 'image gener'
+  chat_bot              Boolean @default(false)
+
+  // ── Relationships ──────────────────────────
+  image_category image_category @relation(fields: [image_category_id], references: [image_category_id])
+}
+
+// ─────────────────────────────────────────────
+//  GENERATED_IMAGE
+// ─────────────────────────────────────────────
+model generated_image {
+  generated_image_id Int      @id @default(autoincrement())
+  img_desc           String?
+  other_details      String?
+  user_id            Int
+  expected_price     Float?
+  status             String   @default("pending")
+  location_id        Int?
+  time_stamp         DateTime @default(now())
+
+  // ── Relationships ──────────────────────────
+  user     user      @relation(fields: [user_id],     references: [user_id])
+  location location? @relation(fields: [location_id], references: [location_id])
+  biddings bidding[]
+}
+
+// ─────────────────────────────────────────────
+//  BIDDING
+// ─────────────────────────────────────────────
+model bidding {
+  bidding_id         Int      @id @default(autoincrement())
+  generated_image_id Int      // Gen ID → generated_image
+  user_id            Int
+  vendor_id          Int
+  vendor_price       Float
+  status             String   @default("pending")
+  date               DateTime @default(now())
+  address_id         Int?
+
+  // ── Relationships ──────────────────────────
+  generated_image generated_image @relation(fields: [generated_image_id], references: [generated_image_id])
+  user            user            @relation(fields: [user_id],            references: [user_id])
+  vendor          vendor          @relation(fields: [vendor_id],          references: [vendor_id])
+  address         address?        @relation(fields: [address_id],         references: [address_id])
+  bidding_orders  bidding_order[]
+}
+
+// ─────────────────────────────────────────────
+//  BIDDING_ORDER
+// ─────────────────────────────────────────────
+model bidding_order {
+  bidding_order_id Int    @id @default(autoincrement())
+  status           String @default("pending")
+  bidding_id       Int
+  user_id          Int
+  vendor_id        Int
+  final_price      Float
+
+  // ── Relationships ──────────────────────────
+  bidding bidding @relation(fields: [bidding_id], references: [bidding_id])
+  user    user    @relation(fields: [user_id],    references: [user_id])
+  vendor  vendor  @relation(fields: [vendor_id],  references: [vendor_id])
+}
+
+// ─────────────────────────────────────────────
+//  QUERY
+// ─────────────────────────────────────────────
+model query {
+  query_id      Int       @id @default(autoincrement())
+  service_id    Int
+  user_id       Int
+  location      String?
+  service_date  DateTime?
+  is_urgent     Boolean?
+  approx_budget Float?
+  is_accepted   Boolean?
+  time_stamp    DateTime  @default(now())
+
+  // ── Relationships ──────────────────────────
+  service       services       @relation(fields: [service_id], references: [services_id])
+  user          user           @relation(fields: [user_id],    references: [user_id])
+  query_vendors query_vendor[]
+  chats         chats[]
+  phones        Phone[]
+  portfolios    Portfolio[]
+  orders        orders[]
+  query_orders  query_order[]
+}
+
+// ─────────────────────────────────────────────
+//  QUERY_ORDER
+// ─────────────────────────────────────────────
+model query_order {
+  query_order_id  Int     @id @default(autoincrement())
+  query_id        Int
+  query_vendor_id Int
+  status          String  @default("pending")
+  final_price     Float
+  service_id      Int
+  service_details String?
+  location_id     Int?
+  image_url       String?
+
+  // ── Relationships ──────────────────────────
+  query        query        @relation(fields: [query_id],        references: [query_id])
+  query_vendor query_vendor @relation(fields: [query_vendor_id], references: [query_vendor_id])
+  service      services     @relation(fields: [service_id],      references: [services_id])
+  location     location?    @relation(fields: [location_id],     references: [location_id])
+}
+
+// ─────────────────────────────────────────────
+//  QUERY_VENDOR
+// ─────────────────────────────────────────────
+model query_vendor {
+  query_vendor_id   Int       @id @default(autoincrement())
+  query_id          Int
+  vendor_id         Int
+  has_accepted      Boolean
+  duration          Int?
+  status            String
+  last_message_at   DateTime?
+  has_been_replaced Boolean?
+  mode_office       Boolean?
+
+  // ── Relationships ──────────────────────────
+  query        query         @relation(fields: [query_id],  references: [query_id])
+  vendor       vendor        @relation(fields: [vendor_id], references: [vendor_id])
+  query_orders query_order[]
+}
+
+// ─────────────────────────────────────────────
+//  CHATS
+// ─────────────────────────────────────────────
+model chats {
+  chat_id             Int      @id @default(autoincrement())
+  query_id            Int
+  text_messages       String?
+  time_stamp          DateTime
+  image_url           String?
+  sender              String?
+  status              String?
+  whatsapp_message_id String?
+  is_call_log         Boolean?
+  is_offer            Boolean?
+  service_id          Int
+  price               Float
+  is_portfolio        Boolean?
+
+  // ── Relationships ──────────────────────────
+  query      query    @relation(fields: [query_id],   references: [query_id])
+  service    services @relation(fields: [service_id], references: [services_id])
+  phones     Phone[]
+  portfolios Portfolio[]
+}
+
+// ─────────────────────────────────────────────
+//  PHONE
+// ─────────────────────────────────────────────
+model Phone {
+  phone_id         Int       @id @default(autoincrement())
+  chat_id          Int
+  query_id         Int
+  time_stamp_start DateTime?
+  time_stamp_end   DateTime?
+  url_audio        String?
+  text_log         String?
+
+  // ── Relationships ──────────────────────────
+  chat  chats @relation(fields: [chat_id],  references: [chat_id])
+  query query @relation(fields: [query_id], references: [query_id])
+}
+
+// ─────────────────────────────────────────────
+//  PORTFOLIO
+// ─────────────────────────────────────────────
+model Portfolio {
+  portfolio_id Int      @id @default(autoincrement())
+  query_id     Int
+  chat_id      Int
+  service_id   Int
+  time_stamp   DateTime
+
+  // ── Relationships ──────────────────────────
+  query query @relation(fields: [query_id], references: [query_id])
+  chat  chats @relation(fields: [chat_id],  references: [chat_id])
+}
+
+// ─────────────────────────────────────────────
+//  PREMIUM_PACKAGES
+// ─────────────────────────────────────────────
+model premium_packages {
+  premium_id      Int      @id @default(autoincrement())
+  package_name    String
+  details         String?
+  price           Float
+  timeline        Int      // duration in days
+
+  // ── Relationships ──────────────────────────
+  premium_vendors premium_vendor[]
+}
+
+// ─────────────────────────────────────────────
+//  PREMIUM_VENDOR
+// ─────────────────────────────────────────────
+model premium_vendor {
+  premium_vendor_id Int      @id @default(autoincrement())
+  vendor_id         Int
+  premium_id        Int
+  start_date        DateTime
+  end_date          DateTime
+
+  // ── Relationships ──────────────────────────
+  vendor           vendor           @relation(fields: [vendor_id],  references: [vendor_id])
+  premium_packages premium_packages @relation(fields: [premium_id], references: [premium_id])
+}
+
+// ─────────────────────────────────────────────
+//  ORDERS
+// ─────────────────────────────────────────────
+model orders {
+  order_id         Int      @id @default(autoincrement())
+  order_type       String
+  query_id         Int
+  payment_type     String
+  total_price      Float
+  total_package    Int
+  total_items      Int
+  paid_percent     Int
+  bidding_order_id Int
+  location_id      Int
+  address          String
+  status           String   @default("pending")
+  time_stamp       DateTime @default(now())
+  service_date     DateTime
+  user_id          Int
+  vendor_id        Int
+
+  // ── Relationships ──────────────────────────
+  user          user          @relation(fields: [user_id],   references: [user_id])
+  vendor        vendor        @relation(fields: [vendor_id], references: [vendor_id])
+  query         query         @relation(fields: [query_id],  references: [query_id])
+  order_package order_package[]
+  order_service order_service[]
+  payment       payment?
+  reviews       review[]
+}
+
+// ─────────────────────────────────────────────
+//  ORDER_PACKAGE
+// ─────────────────────────────────────────────
+model order_package {
+  order_package_id Int    @id @default(autoincrement())
+  order_id         Int
+  package_id       Int
+  package_type_id  Int
+  name             String
+  base_price       Float
+  total_price      Float
+
+  // ── Relationships ──────────────────────────
+  order         orders       @relation(fields: [order_id],        references: [order_id])
+  package_type  package_type @relation(fields: [package_type_id], references: [package_type_id])
+  order_service order_service[]
+}
+
+// ─────────────────────────────────────────────
+//  ORDER_SERVICE
+// ─────────────────────────────────────────────
+model order_service {
+  order_service_id Int    @id @default(autoincrement())
+  order_id         Int
+  order_package_id Int
+  package_id       Int
+  is_in_package    String
+  base_price       Float
+  service_id       Int
+  service_name     String
+  total_price      Float
+
+  // ── Relationships ──────────────────────────
+  order         orders        @relation(fields: [order_id],         references: [order_id])
+  order_package order_package @relation(fields: [order_package_id], references: [order_package_id])
+  service       services      @relation(fields: [service_id],       references: [services_id])
+}
+
+// ─────────────────────────────────────────────
+//  PAYMENT
+// ─────────────────────────────────────────────
+model payment {
+  payment_id      Int      @id @default(autoincrement())
+  payment_type    String
+  time_stamp      DateTime @default(now())
+  order_id        Int      @unique
+  amount          Float
+  status          String   @default("paid")
+  transaction_ref String?
+
+  // ── Relationships ──────────────────────────
+  order orders @relation(fields: [order_id], references: [order_id])
 }
