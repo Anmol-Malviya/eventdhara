@@ -1,11 +1,2 @@
-export type UserRole = 'user' | 'vendor' | 'admin';
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;   
-  role: UserRole;
-  avatar?: string;      
-  createdAt: string;     
-}
+// Re-export from types/index.ts — User type with role field
+export type { User, UserRole, AuthSession } from './index';

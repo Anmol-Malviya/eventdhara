@@ -16,12 +16,12 @@ const GUEST_ONLY_ROUTES: string[] = [
   '/auth/VendorRegister',
 ];
 
-export function proxy(request: NextRequest): NextResponse {
+export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
-  // proxy.ts runs on the server — no localStorage access here
+  // middleware.ts runs on the server — no localStorage access here
   // That is why we store the token in BOTH localStorage (for api.ts)
-  // AND a cookie (for proxy.ts)
+  // AND a cookie (for middleware.ts)
   const token: string | undefined =
     request.cookies.get(AUTH_COOKIE_NAME)?.value;
 
@@ -36,8 +36,7 @@ export function proxy(request: NextRequest): NextResponse {
   // Not logged in + trying to access protected page
   if (isProtected && !token) {
     const loginUrl = new URL('/auth/Login', request.url);
-    // Store where they were trying to go so we can redirect
-    // back after successful login
+    // Store where they were trying to go so we can redirect back after login
     loginUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -55,7 +54,7 @@ export function proxy(request: NextRequest): NextResponse {
 
 export const config = {
   matcher: [
-    // Run proxy on all routes EXCEPT Next.js internals and public files
+    // Run middleware on all routes EXCEPT Next.js internals and public files
     '/((?!_next/static|_next/image|favicon.ico|public/).*)',
   ],
 };

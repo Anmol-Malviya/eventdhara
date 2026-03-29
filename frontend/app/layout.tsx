@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import { CartProvider } from '@/context/CartContext';
+import { BookProvider } from '@/context/BookContext';
 
 export const metadata: Metadata = {
   title: {
@@ -17,12 +19,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <AuthProvider>
-
-        <body suppressHydrationWarning>
-          {children}
-        </body>
-      </AuthProvider>
+      <body suppressHydrationWarning>
+        <AuthProvider>
+          <CartProvider>
+            <BookProvider>
+              {children}
+            </BookProvider>
+          </CartProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }
